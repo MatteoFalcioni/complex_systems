@@ -18,7 +18,7 @@ p_nest = Pos(0.4, 0.4)  # nest position
 p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landscape potential f)
 v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed in the model to roam both z>0 & z<0
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
-delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
+delta = 1e-4  # upper limit on landscape potential (f(z)<delta -> z minimum)
 
 
 class Ant:
@@ -51,7 +51,7 @@ class Ant:
             math.exp((-2 * a * self.s) + b) - self.v.y
 # w = frequency of nest->food->nest; a & b constants to fix weights of the exponential; t current time step
 
-    def optimal_path(self, b, w, t):
+    def optimal_path(self, b, w, t):  # when y=0 model approximates to these equations
         self.z.x = self.z.x + math.exp(b) * (math.sin(w*t) * (p_food.x - p_nest.x) - (self.z.x - p_nest.x))
         self.z.y = self.z.y + math.exp(b) * (math.sin(w * t) * (p_food.y - p_nest.y) - (self.z.y - p_nest.y))
 
@@ -113,7 +113,7 @@ plotY_h = [[0 for b in range(t_max)] for a in range(N+M)]
 for i in range(N+M):  # filling colony
     T_h = random.randint(min_t_h, max_t_h)  # generate t_h
     C = random.uniform(min_c, max_c)  # generate c
-    ant_gen = Ant(s_0, pos_generator(0.1, v_search), T_h, C, v_search)
+    ant_gen = Ant(s_0, pos_generator(0.1, p_nest), T_h, C, v_search)  # generate ants around the nest
     colony.append(ant_gen)
 
 food_found = False
@@ -131,12 +131,12 @@ for t1 in range(t_max):  # food search loop (+ homing)
             print("ant " + str(i) + " is heading home")
             # centering chaotic search around current position to look for the nest in the homing process
             v_home = Pos(7.5 / (2 * psi) - colony[i].z.x, 7.5 / (2 * psi) - colony[i].z.y)
-            colony[i].v = pos_generator(0.1, v_home)
+            colony[i].v = pos_generator(0.1, v_home)  # v_home.x & v_home.y cannot be equal or z(t) will be a line
 
     for i in range(N):
         if not colony[i].homing:  # if ant i is not heading home, then it should be looking for food
             T[i] += 1  # ants get tired when searching for food (not while homing)
-            colony[i].chaotic_crawling()
+            colony[i].chaotic_crawling()  # no decrement of s here, r=0
             plotX1[i][t1] = colony[i].z.x
             plotY1[i][t1] = colony[i].z.y
             if landscape(colony[i].z) < delta:
@@ -145,7 +145,7 @@ for t1 in range(t_max):  # food search loop (+ homing)
                 food_found = True
                 break
         else:  # if homing
-            colony[i].chaotic_crawling()
+            colony[i].chaotic_crawling()  # no decrement of s here, r=0
             TH[i] += 1
             plotX_h[i][t1] = colony[i].z.x
             plotY_h[i][t1] = colony[i].z.y
@@ -181,7 +181,7 @@ if food_found:
     for t2 in range(t_max):
         for i in range(N+M):
             colony[i].chaotic_annealing()  # decrement of s
-            colony[i].model(2.5, 0.5, 0.11, t2)
+            colony[i].model(6, 0.5, 0.11, t2)
             if t2 < 20:
                 plotX2[i][t2] = colony[i].z.x
                 plotY2[i][t2] = colony[i].z.y
@@ -244,5 +244,8 @@ for ax in axs.flat:
     ax.label_outer()
 plt.show()
 
+
+# iff a is big (circa >6) chaotic_crawling() is almost equivalent to model(). But model() seems always more structured,
+# in the sense that ants are mapped in squares around their search centers
 
 
