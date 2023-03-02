@@ -14,7 +14,7 @@ class Pos:
 
 psi = 5  # search range, could be a vector but in this model we take it as a number
 phi = 7.5 / psi  # search diameter
-p_nest = Pos(0.40, 0.40)  # nest position
+p_nest = Pos(0.4, 0.4)  # nest position
 p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landscape potential f)
 v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed in the model to roam both z>0 & z<0
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
@@ -92,8 +92,8 @@ colony = []  # whole colony
 s_0 = 0.999  # initial value of organization parameter
 min_t_h = 5  # minimum value for homing times
 max_t_h = 20  # maximum value for homing times
-min_c = 0.3  # minimum value for nest constant
-max_c = 0.4  # maximum value for nest constant
+min_c = 0.1  # minimum value for nest constant
+max_c = 0.2  # maximum value for nest constant
 # plots
 plotX1 = [[0 for j in range(t_max)] for i in range(N)]
 plotY1 = [[0 for q in range(t_max)] for p in range(N)]
@@ -173,19 +173,23 @@ plt.show()
 
 # ant that found food goes back and recruits M more ants to follow on the search
 # Also, check that homing is right
-for t2 in range(t_max):
-    for i in range(N+M):
-        colony[i].chaotic_annealing()  # decrement of s
-        colony[i].model(2.5, 0.5, 4, t2)  # math error: out of scope with exp
-        if t2 < 20:
-            plotX2[i][t2] = colony[i].z.x
-            plotY2[i][t2] = colony[i].z.y
-        if 20 < t2 < 100:
-            plotX3[i][t2] = colony[i].z.x
-            plotY3[i][t2] = colony[i].z.y
-        if t2 > 300:
-            plotX4[i][t2] = colony[i].z.x
-            plotY4[i][t2] = colony[i].z.y
+if food_found:
+    for t2 in range(t_max):
+        for i in range(N+M):
+            colony[i].chaotic_annealing()  # decrement of s
+            colony[i].model(2.5, 0.5, 0.11, t2)
+            if 0 < colony[i].z.x < 0.01 and 0 < colony[i].z.y < 0.01:
+                print("ant " + str(i) + " has position (" + str(colony[i].z.x) + ", " + str(colony[i].z.y) + ") at "
+                      "time t2 = " + str(t2))
+            if t2 < 20:
+                plotX2[i][t2] = colony[i].z.x
+                plotY2[i][t2] = colony[i].z.y
+            if 20 < t2 < 100:
+                plotX3[i][t2] = colony[i].z.x
+                plotY3[i][t2] = colony[i].z.y
+            if t2 > 300:
+                plotX4[i][t2] = colony[i].z.x
+                plotY4[i][t2] = colony[i].z.y
 
 
 for i in range(N+M):
@@ -205,7 +209,7 @@ plt.ylabel('y')
 plt.title('z(t)')
 plt.show()
 for i in range(N+M):
-    plt.scatter(plotX4[i], plotY4[i], marker=".", s=30)
+    plt.plot(plotX4[i], plotY4[i])
 plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
 plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
 plt.xlabel('x')
