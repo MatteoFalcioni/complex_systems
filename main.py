@@ -18,7 +18,7 @@ p_nest = Pos(0.4, 0.4)  # nest position
 p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landscape potential f)
 v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed in the model to roam both z>0 & z<0
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
-delta = 1e-4  # upper limit on landscape potential (f(z)<delta -> z minimum)
+delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
 
 
 class Ant:
@@ -50,6 +50,7 @@ class Ant:
             (abs(math.sin(w * t)) * (p_food.y - p_nest.y) - (self.z.y - p_nest.y)) * \
             math.exp((-2 * a * self.s) + b) - self.v.y
 # w = frequency of nest->food->nest; a & b constants to fix weights of the exponential; t current time step
+# iff a is very big (circa > 12) chaotic_crawling() is equivalent to model().
 
     def optimal_path(self, b, w, t):  # when y=0 model approximates to these equations
         self.z.x = self.z.x + math.exp(b) * (math.sin(w*t) * (p_food.x - p_nest.x) - (self.z.x - p_nest.x))
@@ -136,7 +137,7 @@ for t1 in range(t_max):  # food search loop (+ homing)
     for i in range(N):
         if not colony[i].homing:  # if ant i is not heading home, then it should be looking for food
             T[i] += 1  # ants get tired when searching for food (not while homing)
-            colony[i].chaotic_crawling()  # no decrement of s here, r=0
+            colony[i].model(15, 0.5, 0.11, t1)  # no decrement of s here, r=0
             plotX1[i][t1] = colony[i].z.x
             plotY1[i][t1] = colony[i].z.y
             if landscape(colony[i].z) < delta:
@@ -145,7 +146,7 @@ for t1 in range(t_max):  # food search loop (+ homing)
                 food_found = True
                 break
         else:  # if homing
-            colony[i].chaotic_crawling()  # no decrement of s here, r=0
+            colony[i].model(15, 0.5, 0.11, t1)  # no decrement of s here, r=0
             TH[i] += 1
             plotX_h[i][t1] = colony[i].z.x
             plotY_h[i][t1] = colony[i].z.y
@@ -158,30 +159,13 @@ for t1 in range(t_max):  # food search loop (+ homing)
     if food_found:
         break
 
-for i in range(N):
-    plt.scatter(plotX1[i], plotY1[i], marker=".", s=30)
-plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
-plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('z(t)')
-plt.show()
-for i in range(N):
-    plt.scatter(plotX_h[i], plotY_h[i], marker=".", s=30)
-plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
-plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('z(t) of homing ants')
-plt.show()
-
 # ant that found food goes back and recruits M more ants to follow on the search
 # Also, check that homing is right
 if food_found:
     for t2 in range(t_max):
         for i in range(N+M):
             colony[i].chaotic_annealing()  # decrement of s
-            colony[i].model(6, 0.5, 0.11, t2)
+            colony[i].model(15, 0.5, 0.11, t2)
             if t2 < 20:
                 plotX2[i][t2] = colony[i].z.x
                 plotY2[i][t2] = colony[i].z.y
@@ -218,6 +202,23 @@ plt.ylabel('y')
 plt.title('z(t)')
 plt.show()
 """
+# plots
+for i in range(N):
+    plt.scatter(plotX1[i], plotY1[i], marker=".", s=30)
+plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('z(t)')
+plt.show()
+for i in range(N):
+    plt.scatter(plotX_h[i], plotY_h[i], marker=".", s=30)
+plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('z(t) of homing ants')
+plt.show()
 
 fig = plt.figure()
 gs = fig.add_gridspec(3, hspace=0.5)
@@ -245,7 +246,8 @@ for ax in axs.flat:
 plt.show()
 
 
-# iff a is big (circa >6) chaotic_crawling() is almost equivalent to model(). But model() seems always more structured,
-# in the sense that ants are mapped in squares around their search centers
+
+
+
 
 
