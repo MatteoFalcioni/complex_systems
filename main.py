@@ -18,7 +18,7 @@ p_nest = Pos(0.4, 0.4)  # nest position
 p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landscape potential f)
 v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed in the model to roam both z>0 & z<0
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
-delta = 0.5 * 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
+delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
 
 
 class Ant:
@@ -50,6 +50,10 @@ class Ant:
             (abs(math.sin(w * t)) * (p_food.y - p_nest.y) - (self.z.y - p_nest.y)) * \
             math.exp((-2 * a * self.s) + b) - self.v.y
 # w = frequency of nest->food->nest; a & b constants to fix weights of the exponential; t current time step
+
+    def optimal_path(self, b, w, t):
+        self.z.x = self.z.x + math.exp(b) * (math.sin(w*t) * (p_food.x - p_nest.x) - (self.z.x - p_nest.x))
+        self.z.y = self.z.y + math.exp(b) * (math.sin(w * t) * (p_food.y - p_nest.y) - (self.z.y - p_nest.y))
 
 
 def dist(pos_1, pos_2):
@@ -178,20 +182,17 @@ if food_found:
         for i in range(N+M):
             colony[i].chaotic_annealing()  # decrement of s
             colony[i].model(2.5, 0.5, 0.11, t2)
-            if 0 < colony[i].z.x < 0.01 and 0 < colony[i].z.y < 0.01:
-                print("ant " + str(i) + " has position (" + str(colony[i].z.x) + ", " + str(colony[i].z.y) + ") at "
-                      "time t2 = " + str(t2))
             if t2 < 20:
                 plotX2[i][t2] = colony[i].z.x
                 plotY2[i][t2] = colony[i].z.y
-            if 20 < t2 < 100:
+            if 20 < t2 < 200:
                 plotX3[i][t2] = colony[i].z.x
                 plotY3[i][t2] = colony[i].z.y
-            if t2 > 300:
+            if t2 > 200:
                 plotX4[i][t2] = colony[i].z.x
                 plotY4[i][t2] = colony[i].z.y
 
-
+"""
 for i in range(N+M):
     plt.scatter(plotX2[i], plotY2[i], marker=".", s=30)
 plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
@@ -209,14 +210,39 @@ plt.ylabel('y')
 plt.title('z(t)')
 plt.show()
 for i in range(N+M):
-    plt.plot(plotX4[i], plotY4[i])
+    plt.scatter(plotX4[i], plotY4[i], marker=".", s=30)
 plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
 plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
 plt.xlabel('x')
 plt.ylabel('y')
 plt.title('z(t)')
 plt.show()
+"""
 
+fig = plt.figure()
+gs = fig.add_gridspec(3, hspace=0.5)
+axs = gs.subplots(sharex=True, sharey=True)
+
+for i in range(N+M):
+    axs[0].scatter(plotX2[i], plotY2[i], marker=".", s=30)
+    axs[1].scatter(plotX3[i], plotY3[i], marker=".", s=30)
+    axs[2].scatter(plotX4[i], plotY4[i], marker=".", s=30)
+axs[0].scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+axs[1].scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+axs[2].scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+axs[0].scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
+axs[1].scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
+axs[2].scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
+fig.suptitle('z(t) for optimal path searching ants')
+axs[0].set_title('t < 20')
+axs[1].set_title('20 < t < 200')
+axs[2].set_title('t > 200')
+
+for ax in axs.flat:
+    ax.set(xlabel='x(t)', ylabel='y(t)')
+    # ax.set(adjustable='box', aspect='equal')
+    ax.label_outer()
+plt.show()
 
 
 
