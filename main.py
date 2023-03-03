@@ -19,6 +19,9 @@ p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landsc
 v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed in the model to roam both z>0 & z<0
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
 delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
+a = 15
+b = 0.5
+w = 0.11
 
 
 class Ant:
@@ -42,7 +45,7 @@ class Ant:
         self.z.x = (self.z.x + self.v.x) * math.exp(3 - psi * (self.z.x + self.v.x)) - self.v.x
         self.z.y = (self.z.y + self.v.y) * math.exp(3 - psi * (self.z.y + self.v.y)) - self.v.y
 
-    def model(self, a, b, w, t):
+    def model(self, t):
         self.z.x = (self.z.x + self.v.x) * math.exp((1 - math.exp(-a * self.s)) * (3 - psi * (self.z.x + self.v.x))) + \
             (abs(math.sin(w * t)) * (p_food.x - p_nest.x) - (self.z.x - p_nest.x)) * \
             math.exp((-2 * a * self.s) + b) - self.v.x
@@ -52,7 +55,7 @@ class Ant:
 # w = frequency of nest->food->nest; a & b constants to fix weights of the exponential; t current time step
 # iff a is very big (circa > 12) chaotic_crawling() is equivalent to model().
 
-    def optimal_path(self, b, w, t):  # when y=0 model approximates to these equations
+    def optimal_path(self, t):  # when y=0 model approximates to these equations
         self.z.x = self.z.x + math.exp(b) * (math.sin(w*t) * (p_food.x - p_nest.x) - (self.z.x - p_nest.x))
         self.z.y = self.z.y + math.exp(b) * (math.sin(w * t) * (p_food.y - p_nest.y) - (self.z.y - p_nest.y))
 
@@ -98,7 +101,7 @@ s_0 = 0.999  # initial value of organization parameter
 min_t_h = 5  # minimum value for homing times
 max_t_h = 20  # maximum value for homing times
 min_c = 0.1  # minimum value for nest constant
-max_c = 0.2  # maximum value for nest constant
+max_c = 0.3  # maximum value for nest constant
 # plots
 plotX1 = [[0 for j in range(t_max)] for i in range(N)]
 plotY1 = [[0 for q in range(t_max)] for p in range(N)]
@@ -129,7 +132,6 @@ for t1 in range(t_max):  # food search loop (+ homing)
             T[i] = 0
             TH[i] = 0
             colony[i].homing = True  # ant i is now heading home instead of looking for food
-            print("ant " + str(i) + " is heading home")
             # centering chaotic search around current position to look for the nest in the homing process
             v_home = Pos(7.5 / (2 * psi) - colony[i].z.x, 7.5 / (2 * psi) - colony[i].z.y)
             colony[i].v = pos_generator(0.1, v_home)  # v_home.x & v_home.y cannot be equal or z(t) will be a line
@@ -137,7 +139,7 @@ for t1 in range(t_max):  # food search loop (+ homing)
     for i in range(N):
         if not colony[i].homing:  # if ant i is not heading home, then it should be looking for food
             T[i] += 1  # ants get tired when searching for food (not while homing)
-            colony[i].model(15, 0.5, 0.11, t1)  # no decrement of s here, r=0
+            colony[i].model(t1)  # no decrement of s here, r=0
             plotX1[i][t1] = colony[i].z.x
             plotY1[i][t1] = colony[i].z.y
             if landscape(colony[i].z) < delta:
@@ -146,7 +148,7 @@ for t1 in range(t_max):  # food search loop (+ homing)
                 food_found = True
                 break
         else:  # if homing
-            colony[i].model(15, 0.5, 0.11, t1)  # no decrement of s here, r=0
+            colony[i].model(t1)  # no decrement of s here, r=0
             TH[i] += 1
             plotX_h[i][t1] = colony[i].z.x
             plotY_h[i][t1] = colony[i].z.y
@@ -161,18 +163,20 @@ for t1 in range(t_max):  # food search loop (+ homing)
 
 # ant that found food goes back and recruits M more ants to follow on the search
 # Also, check that homing is right
+t_graph1 = 20
+t_graph2 = 200
 if food_found:
     for t2 in range(t_max):
         for i in range(N+M):
             colony[i].chaotic_annealing()  # decrement of s
-            colony[i].model(15, 0.5, 0.11, t2)
-            if t2 < 20:
+            colony[i].model(t2)
+            if t2 < t_graph1:
                 plotX2[i][t2] = colony[i].z.x
                 plotY2[i][t2] = colony[i].z.y
-            if 20 < t2 < 200:
+            if t_graph1 < t2 < t_graph2:
                 plotX3[i][t2] = colony[i].z.x
                 plotY3[i][t2] = colony[i].z.y
-            if t2 > 200:
+            if t2 > t_graph2:
                 plotX4[i][t2] = colony[i].z.x
                 plotY4[i][t2] = colony[i].z.y
 
@@ -234,10 +238,10 @@ axs[2].scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
 axs[0].scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
 axs[1].scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
 axs[2].scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
-fig.suptitle('z(t) for optimal path searching ants')
-axs[0].set_title('t < 20')
-axs[1].set_title('20 < t < 200')
-axs[2].set_title('t > 200')
+fig.suptitle('z(t) of ants during optimal path searching')
+axs[0].set_title('t < ' + str(t_graph1))
+axs[1].set_title(str(t_graph1) + ' < t < ' + str(t_graph2))
+axs[2].set_title('t > ' + str(t_graph2))
 
 for ax in axs.flat:
     ax.set(xlabel='x(t)', ylabel='y(t)')
