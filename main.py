@@ -20,9 +20,21 @@ v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
 delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
 a = 15
-b = 0.5  # a & b constants to fix weights of the exponential
-w = 0.11  # frequency of nest->food->nest
-D = 0.2  # distance below which ants are connected in graph
+b = 0.5  # a & b constants to fix weights of the exponential in model
+w = 0.11  # frequency of nest->food->nest travel
+D = 0.3  # distance below which ants are connected in graph. Could also grow with t (alarm pheromone density increases)
+M = 5  # number of recruited ants
+N = 50  # number of searching ants (whole colony: N+M)
+K = N+M
+t_max = 500  # number of iterations
+colony = []  # whole colony
+s_0 = 0.999  # initial value of organization parameter
+min_t_h = 5  # minimum value for homing times
+max_t_h = 20  # maximum value for homing times
+min_c = 0.1  # minimum value for nest constant
+max_c = 0.3  # maximum value for nest constant
+predator = False  # presence of predator in the environment
+food_found = False  # to break out of food searching loop
 
 
 class Ant:
@@ -34,6 +46,7 @@ class Ant:
         self.c = c  # constant for nest position
         self.homing = False  # boolean value to check if the ant is homing
         self.v = v  # chaotic search center
+        self.alarm = False  # when True, it means that the ant is alarmed by a predator attack
 
     def chaotic_map(self):  # map to try out chaotic crawling. needed v to roam both z>0 & z<0
         self.z.x = self.z.x * math.exp(3 - psi * self.z.x)
@@ -82,7 +95,7 @@ def landscape(pos):
 def pos_generator(rng, center):
     # generate a random position on a square of L=rng around the nest
     # useless to generate it farther than phi/2 from p_nest since psi forces the ant to stay in the square of L=phi/2
-    if rng < phi / 2:
+    if rng <= phi / 2:
         pass
     else:
         print("You are generating a position farther than the search radius from the nest, which is useless")
@@ -94,18 +107,9 @@ def pos_generator(rng, center):
     return z_gen
 
 
-M = 5  # number of recruited ants
-N = 20  # number of searching ants (whole colony: N+M)
-t_max = 500  # number of iterations
-colony = []  # whole colony
-s_0 = 0.999  # initial value of organization parameter
-min_t_h = 5  # minimum value for homing times
-max_t_h = 20  # maximum value for homing times
-min_c = 0.1  # minimum value for nest constant
-max_c = 0.3  # maximum value for nest constant
 # plots
-plotX1 = [[0 for j in range(t_max)] for i in range(N)]
-plotY1 = [[0 for q in range(t_max)] for p in range(N)]
+plotX1 = [[0 for j in range(t_max)] for i in range(N+M)]
+plotY1 = [[0 for q in range(t_max)] for p in range(N+M)]
 plotX2 = [[0 for m in range(t_max)] for n in range(N+M)]
 plotY2 = [[0 for b in range(t_max)] for a in range(N+M)]
 plotX3 = [[0 for m in range(t_max)] for n in range(N+M)]
@@ -114,6 +118,8 @@ plotX4 = [[0 for m in range(t_max)] for n in range(N+M)]
 plotY4 = [[0 for b in range(t_max)] for a in range(N+M)]
 plotX_h = [[0 for m in range(t_max)] for n in range(N+M)]
 plotY_h = [[0 for b in range(t_max)] for a in range(N+M)]
+plotGraphX = [0] * (N+M+1)
+plotGraphY = [0] * (N+M+1)
 
 for i in range(N+M):  # filling colony
     T_h = random.randint(min_t_h, max_t_h)  # generate t_h
@@ -125,19 +131,22 @@ colony.append(Ant(0, p_nest, 0, 0, 0))
 
 A = [[0 for j in range(N+M+1)] for i in range(N+M+1)]
 # Adjacency matrix. the +1 is for the "source" of the alarm, which is an ant fixed in the nest
-for i in range(N+M+1):
-    for j in range(N+M+1):
-        if j < i and dist(colony[i].z, colony[j].z) <= D:  # undirected graph -> symmetric adjacency matrix -> i<j
-            A[i][j] = 1
-            A[j][i] = 1  # symmetric
-print(A)
+predator_pos = pos_generator(phi/2, p_nest)  # positioning predator randomly in the square where ants are wandering
+if predator:
+    colony[K+1].alarm = True  # when predator appears, the ants in the nest are alarmed (add time delay for this info)
 
-food_found = False
 T = [0] * N  # list of counters for homing times
 TH = [0] * N  # counter to check how much time it takes for ants to reach their nest
 
 for t1 in range(t_max):  # food search loop (+ homing)
+    if not predator:
+        r = random.uniform(0, 1)
+        if r < 0.1:
+            predator = True
+            print("predator spawned in (" + str(predator_pos.x) + ", " + str(predator_pos.y) + ")")
+
     print("t1= " + str(t1))
+    # only N ants moving now, M will join when food is found
     for i in range(N):  # first, checking which ants have reached their homing time
         # could be that ants can't find their nest in time for T to be again equal to t_h, so needed to check
         if colony[i].t_h == T[i] and not colony[i].homing:
@@ -170,11 +179,32 @@ for t1 in range(t_max):  # food search loop (+ homing)
                 #      str(colony[i].c))
                 colony[i].homing = False
                 colony[i].v = v_search
-    if food_found:
-        break
+    for i in range(N + M + 1):  # adjourning adjacency matrix at each time step
+        for j in range(N + M + 1):
+            if j < i:  # undirected graph -> symmetric adjacency matrix -> i<j
+                if dist(colony[i].z, colony[j].z) <= D:
+                    A[i][j] = 1
+                    A[j][i] = 1  # symmetric
+                else:
+                    A[i][j] = 0
+                    A[j][i] = 0
+        if t1 == 499:
+            plotGraphX[i] = colony[i].z.x
+            plotGraphY[i] = colony[i].z.y
+    if predator:
+        for i in range(K+1):  # check if ant K = nest
+            if A[K][i] == 1:  # ants connected with nest start getting predator alarm
+                # ants should notice predator when other ants disappear: fix this
+                colony[i].alarm = True  # check if saying colony[i] is the same as saying A[i][j] for all j
+        for i in range(K+1):
+            for j in range(K+1):
+                if colony[i].alarm and A[i][j] == 1:
+                    colony[j].alarm = True
+
+    # if food_found:
+    #    break
 
 # ant that found food goes back and recruits M more ants to follow on the search
-# Also, check that homing is right
 t_graph1 = 20
 t_graph2 = 200
 if food_found:
@@ -219,6 +249,7 @@ plt.title('z(t)')
 plt.show()
 """
 # plots
+"""
 for i in range(N):
     plt.scatter(plotX1[i], plotY1[i], marker=".", s=30)
 plt.scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
@@ -234,6 +265,36 @@ plt.scatter(p_food.x, p_food.y, marker="*", s=40, color="black")
 plt.xlabel('x')
 plt.ylabel('y')
 plt.title('z(t) of homing ants')
+plt.show()
+"""
+for i in range(N+M+1):
+    if colony[i].alarm:
+        plt.scatter(plotGraphX[i], plotGraphY[i], marker=".", s=85, color="red")
+    else:
+        plt.scatter(plotGraphX[i], plotGraphY[i], marker=".", s=85, color="green")
+    for j in range(N+M+1):
+        if j < i and A[i][j] == 1:
+            x_values = [plotGraphX[i], plotGraphX[j]]
+            y_values = [plotGraphY[i], plotGraphY[j]]
+            plt.plot(x_values, y_values, color="lightskyblue")
+plt.scatter(predator_pos.x, predator_pos.y, marker="*", s=80, color="black")
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('ant network at t=499')
+plt.show()
+
+"""
+fig1, axs1 = plt.subplots(1, 2)
+fig1.suptitle('z(t) of food searching ants (left) and homing ones (right)')
+for i in range(N+M):
+    axs1[0].scatter(plotX1[i], plotY1[i], marker=".", s=30)
+    axs1[1].scatter(plotX_h[i], plotY_h[i], marker=".", s=30)
+axs1[0].scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+axs1[1].scatter(p_nest.x, p_nest.y, marker="*", s=40, color="black")
+for ax in axs1.flat:
+    ax.set(xlabel='x(t)', ylabel='y(t)')
+    ax.set(adjustable='box', aspect='equal')
+    ax.label_outer()
 plt.show()
 
 fig = plt.figure()
@@ -260,6 +321,8 @@ for ax in axs.flat:
     # ax.set(adjustable='box', aspect='equal')
     ax.label_outer()
 plt.show()
+"""
+
 
 
 
