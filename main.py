@@ -323,7 +323,9 @@ for ax in axs.flat:
 plt.show()
 """
 
-
+# check if ant colony[K] is nest ant.
+# ants should notice predator when other ants disappear:fix this. Maybe with another boolean "dead/alive" instead of erasing ants from colony
+# check if saying colony[i] is the same as saying A[i][j] for all j
 
 
 
