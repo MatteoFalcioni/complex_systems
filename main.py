@@ -2,6 +2,8 @@ import random
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import networkx as nx
+import plotly.graph_objs as go
 
 
 # ants position. In the following called z=(x,y)
@@ -94,7 +96,7 @@ def pos_generator(rng, center):
 
 
 M = 5  # number of recruited ants
-N = 50  # number of searching ants (whole colony: N+M)
+N = 20  # number of searching ants (whole colony: N+M)
 t_max = 500  # number of iterations
 colony = []  # whole colony
 s_0 = 0.999  # initial value of organization parameter
@@ -119,6 +121,13 @@ for i in range(N+M):  # filling colony
     C = random.uniform(min_c, max_c)  # generate c
     ant_gen = Ant(s_0, pos_generator(0.1, p_nest), T_h, C, v_search)  # generate ants around the nest
     colony.append(ant_gen)
+
+G = nx.Graph()
+for i in range(N+M):
+    G.add_node(colony[i], i)
+for i in range(N+M):
+    for j in range(N+M):
+
 
 food_found = False
 T = [0] * N  # list of counters for homing times
