@@ -2,8 +2,6 @@ import random
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import networkx as nx
-import plotly.graph_objs as go
 
 
 # ants position. In the following called z=(x,y)
@@ -22,8 +20,9 @@ v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
 delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
 a = 15
-b = 0.5
-w = 0.11
+b = 0.5  # a & b constants to fix weights of the exponential
+w = 0.11  # frequency of nest->food->nest
+D = 0.2  # distance below which ants are connected in graph
 
 
 class Ant:
@@ -54,7 +53,7 @@ class Ant:
         self.z.y = (self.z.y + self.v.y) * math.exp((1 - math.exp(-a * self.s)) * (3 - psi * (self.z.y + self.v.y))) + \
             (abs(math.sin(w * t)) * (p_food.y - p_nest.y) - (self.z.y - p_nest.y)) * \
             math.exp((-2 * a * self.s) + b) - self.v.y
-# w = frequency of nest->food->nest; a & b constants to fix weights of the exponential; t current time step
+# t current time step
 # iff a is very big (circa > 12) chaotic_crawling() is equivalent to model().
 
     def optimal_path(self, t):  # when y=0 model approximates to these equations
@@ -121,13 +120,17 @@ for i in range(N+M):  # filling colony
     C = random.uniform(min_c, max_c)  # generate c
     ant_gen = Ant(s_0, pos_generator(0.1, p_nest), T_h, C, v_search)  # generate ants around the nest
     colony.append(ant_gen)
+colony.append(Ant(0, p_nest, 0, 0, 0))
+# "source" ant, will be fixed in the nest to represent nest position in following graph
 
-G = nx.Graph()
-for i in range(N+M):
-    G.add_node(colony[i], i)
-for i in range(N+M):
-    for j in range(N+M):
-
+A = [[0 for j in range(N+M+1)] for i in range(N+M+1)]
+# Adjacency matrix. the +1 is for the "source" of the alarm, which is an ant fixed in the nest
+for i in range(N+M+1):
+    for j in range(N+M+1):
+        if j < i and dist(colony[i].z, colony[j].z) <= D:  # undirected graph -> symmetric adjacency matrix -> i<j
+            A[i][j] = 1
+            A[j][i] = 1  # symmetric
+print(A)
 
 food_found = False
 T = [0] * N  # list of counters for homing times
@@ -162,9 +165,9 @@ for t1 in range(t_max):  # food search loop (+ homing)
             plotX_h[i][t1] = colony[i].z.x
             plotY_h[i][t1] = colony[i].z.y
             if dist(colony[i].z, p_nest) < colony[i].c:
-                print("ant " + str(i) + " has found nest in z = (" + str(colony[i].z.x) + ", " +
-                      str(colony[i].z.y) + ") after " + str(TH[i]) + " time steps. It's nest constant was " +
-                      str(colony[i].c))
+                # print("ant " + str(i) + " has found nest in z = (" + str(colony[i].z.x) + ", " +
+                #      str(colony[i].z.y) + ") after " + str(TH[i]) + " time steps. It's nest constant was " +
+                #      str(colony[i].c))
                 colony[i].homing = False
                 colony[i].v = v_search
     if food_found:
