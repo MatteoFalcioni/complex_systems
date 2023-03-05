@@ -149,13 +149,14 @@ for t1 in range(t_max):  # food search loop (+ homing)
     print("t1= " + str(t1))
     # only N ants moving now, M will join when food is found
     for i in range(N):  # first, checking which ants have reached their homing time
-        if colony[i].t_h == T[i] and not colony[i].homing and colony[i].alive and not colony[i].alarm:
-            T[i] = 0
-            TH[i] = 0
-            colony[i].homing = True  # ant i is now heading home instead of looking for food
-            # centering chaotic search around current position to look for the nest in the homing process
-            v_home = Pos(7.5 / (2 * psi) - colony[i].z.x, 7.5 / (2 * psi) - colony[i].z.y)
-            colony[i].v = pos_generator(0.1, v_home)  # v_home.x & v_home.y cannot be equal or z(t) will be a line
+        if not colony[i].alarm:
+            if colony[i].t_h == T[i] and not colony[i].homing and colony[i].alive:
+                T[i] = 0
+                TH[i] = 0
+                colony[i].homing = True  # ant i is now heading home instead of looking for food
+                # centering chaotic search around current position to look for the nest in the homing process
+                v_home = Pos(7.5 / (2 * psi) - colony[i].z.x, 7.5 / (2 * psi) - colony[i].z.y)
+                colony[i].v = pos_generator(0.1, v_home)  # v_home.x & v_home.y cannot be equal or z(t) will be a line
 
     for i in range(N):
         if colony[i].alive:
@@ -347,8 +348,7 @@ plt.show()
 """
 
 # something's wrong, alarmed ants are not returning home, or if they are then they get back to food searching. Fix it
-
-
+# also predator position is wrong, can still be generated near nest. Maybe fix it with a while
 
 
 
