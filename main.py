@@ -222,35 +222,28 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
                     plotY_h[i][t1] = colony[i].z.y
                     if dist(colony[i].z, p_nest) < colony[i].c:
                         print("ant " + str(i) + " has found nest in z = (" + str(colony[i].z.x) + ", " +
-                              str(colony[i].z.y) + ") after " + str(TH[i]) + " time steps. It's nest constant was " +
-                              str(colony[i].c))
+                              str(colony[i].z.y) + ") after " + str(TH[i]))
                         colony[i].homing = False
                         colony[i].v = v_search
             else:  # if ant i is alarmed by the presence of a predator it will be homing to escape
                 colony[i].homing = True
                 if colony[i].homing:  # if it hasn't found the nest yet in its run from the predator
                     colony[i].model(t1)
-                    if dist(colony[i].z, p_nest) < colony[i].c: # nest found. Stay there since you're alarmed
-                        print("ant " + str(i) + " has found nest in z = (" + str(colony[i].z.x) + ", " +
-                              str(colony[i].z.y) + ") while running from predator. "
-                                                   "It will stay there until predator is gone")
+                    if dist(colony[i].z, p_nest) < colony[i].c:  # nest found. Stay there since you're alarmed
                         colony[i].homing = False
                         colony[i].safe = True
                         safe_ants += 1
-                        # ERROR HERE: ants are not homing but alarmed so they are homing again in the next iteration
-                        # maybe add another boolean, safe, to say that ants have reached they're nest after running
-                        # away from predator and they will stay there until further notice of its departure
-
     if food_found:
         break
 
-print("of " + str(K) + " total ants in the colony, " + str(ants_eaten) + " were eaten by predator while " +
-      str(safe_ants) + " returned home safely.")
+print("of " + str(N) + " total ants in the colony, " + str(ants_eaten) + " were eaten by predator while " +
+      str(safe_ants) + " returned home safely. " + str(abs(N -(ants_eaten + safe_ants))) +
+      " ants are still out there...")
 
 t_graph1 = 20
 t_graph2 = 200
 # ant that found food goes back and recruits M more ants to follow on the search. K ants involved now
-"""
+
 if food_found:
     for t2 in range(t_max):
         for i in range(K):
@@ -265,7 +258,7 @@ if food_found:
             if t2 > t_graph2:
                 plotX4[i][t2] = colony[i].z.x
                 plotY4[i][t2] = colony[i].z.y
-"""
+
 """
 for i in range(K):
     plt.scatter(plotX2[i], plotY2[i], marker=".", s=30)
