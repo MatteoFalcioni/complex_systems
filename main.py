@@ -26,7 +26,7 @@ D = 0.2  # distance below which ants are connected in graph. Could also grow wit
 M = 5  # number of recruited ants
 N = 50  # number of searching ants (whole colony: K)
 K = N+M
-t_max = 500  # number of iterations
+t_max = 2000  # number of iterations
 colony = []  # whole colony
 s_0 = 0.999  # initial value of organization parameter
 min_t_h = 5  # minimum value for homing times
@@ -35,7 +35,7 @@ min_c = 0.05  # minimum value for nest constant
 max_c = 0.15  # maximum value for nest constant
 predator = False  # presence of predator in the environment
 pred_prob = 0.1  # probability of predator appearing at each time step
-predator_rng = 0.1  # radius of the circle in which predator eats ants
+predator_rng = 0.05  # radius of the circle in which predator eats ants
 food_found = False  # to break out of food searching loop
 
 
@@ -131,13 +131,15 @@ colony.append(Ant(0, p_nest, 0, 0, 0))
 
 A = [[0 for j in range(K+1)] for i in range(K+1)]  # Adjacency matrix
 # positioning predator randomly in the square where ants are wandering, not too near to the nest
-predator_pos = pos_generator(phi/2, Pos(p_nest.x + 0.3, p_nest.y + 0.3))
+predator_pos = Pos(0, 0)
+while predator_pos.x < p_nest.x or predator_pos.y < p_nest.y:
+    predator_pos = pos_generator(phi/2, Pos(p_nest.x, p_nest.y))
 
 T = [0] * N  # counter to check if homing times have been reached by ants
 TH = [0] * N  # counter to check how much time it takes for ants to reach their nest when homing
 
 for t1 in range(t_max):  # food search loop (+ homing)
-    if not predator:
+    if not predator:  # spawning predator with probability pred_prob at each step
         r = random.uniform(0, 1)
         if r < pred_prob:
             predator = True
@@ -147,11 +149,11 @@ for t1 in range(t_max):  # food search loop (+ homing)
             colony[K].alarm = True  # when predator spawns, ants in the nest are alarmed (add time delay for this)
 
     print("t1= " + str(t1))
-    # only N ants moving now, M will join when food is found
+    # only N ants moving now, M will join when food is found. Until then, they stay in the nest
     for i in range(N):  # first, checking which ants have reached their homing time
-        if not colony[i].alarm:
-            if colony[i].t_h == T[i] and not colony[i].homing and colony[i].alive:
-                T[i] = 0
+        if not colony[i].alarm and colony[i].alive:  # if they are not running from predator
+            if colony[i].t_h == T[i] and not colony[i].homing:
+                T[i] = 0  # reset counter of how tired ant i is (since ant i will now head home)
                 TH[i] = 0
                 colony[i].homing = True  # ant i is now heading home instead of looking for food
                 # centering chaotic search around current position to look for the nest in the homing process
@@ -171,9 +173,9 @@ for t1 in range(t_max):  # food search loop (+ homing)
                               str(colony[i].z.y) + ") after " + str(t1) + "time steps  ***")
                         food_found = True
                         break
-                # else: they'll stay there. After some time predator will turn False
-                # and turn back all colony[i].alarm to False too
-
+                else:
+                    continue    # they'll stay there. After some time predator will turn False
+                                # and turn back all colony[i].alarm to False too
             else:  # if homing
                 colony[i].model(t1)  # no decrement of s here, r=0
                 TH[i] += 1
@@ -199,6 +201,7 @@ for t1 in range(t_max):  # food search loop (+ homing)
         if t1 == 499:
             plotGraphX[i] = colony[i].z.x
             plotGraphY[i] = colony[i].z.y
+
     if predator:
         ants_eaten = 0
         time_delay = 0  # to give delay to info of ants being eaten by predator
@@ -219,9 +222,8 @@ for t1 in range(t_max):  # food search loop (+ homing)
                     colony[j].alarm = True
                     colony[j].homing = True
 
-
-    # if food_found:
-    #    break
+    if food_found:
+        break
 
 t_graph1 = 20
 t_graph2 = 200
