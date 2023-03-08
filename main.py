@@ -20,7 +20,7 @@ v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed
 r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
 delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
 a = 15
-b = 0.5  # a & b constants to fix weights of the exponential in model
+b = 0.3  # a & b constants to fix weights of the exponential in model
 w = 0.11  # frequency of nest->food->nest travel
 D = 0.2  # distance below which ants are connected in graph. Could also grow with t (alarm pheromone density increases)
 M = 5  # number of recruited ants
@@ -38,6 +38,7 @@ pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.1  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
 food_found = False  # to break out of food searching loop
+food_found_time = 0
 
 
 class Ant:
@@ -136,18 +137,24 @@ A = [[0 for j in range(K+1)] for i in range(K+1)]  # Adjacency matrix
 predator_pos = p_nest
 while p_nest.x - max_c < predator_pos.x < p_nest.x + max_c or p_nest.y - max_c < predator_pos.y < p_nest.y + max_c:
     predator_pos = pos_generator(phi/2, Pos(p_nest.x, p_nest.y))
-    
-time_delay = 0  # to give delay to info of ants being eaten by predator
+
+predation_time_interval = [-1, -1]
+pred_staying = 0
+time_wait = 0
+time_delay = 5  # to give delay to info of ants being eaten by predator
 safe_ants = 0
 ants_eaten = 0
 
 T = [0] * N  # counter to check if homing times have been reached by ants
 TH = [0] * N  # counter to check how much time it takes for ants to reach their nest when homing
 
+simulation_data = open('sim.data', 'a')
+
 for t1 in range(t_max):  # food searching loop (+ homing + predation)
     print("t1= " + str(t1))
+    food_found_time += 1
 
-    # adjourning ants network
+    # adjourning ants network. consider K-th element which is the source
     for i in range(K + 1):  # adjourning adjacency matrix at each time step
         for j in range(K + 1):
             if j < i:  # undirected graph -> symmetric adjacency matrix -> j<i is enough
@@ -157,27 +164,34 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
                 else:
                     A[i][j] = 0
                     A[j][i] = 0
-
         if t1 == t_max-1:
             plotGraphXF[i] = colony[i].z.x
             plotGraphYF[i] = colony[i].z.y
 
     # spawning predator with probability pred_prob at each step
     if not predator:
-        r = random.uniform(0, 1)
-        if r < pred_prob:
-            predator = True
-            print("predator spawned in (" + str(predator_pos.x) + ", " + str(predator_pos.y) + ") at t=" + str(t1))
+        # when pred_staying > pred_time it means that predator has spawned and has left after pred_time
+        if pred_staying < pred_time:
+            r = random.uniform(0, 1)
+            if r < pred_prob:
+                predator = True
+                print("predator spawned in (" + str(predator_pos.x) + ", " + str(predator_pos.y) + ") at t=" + str(t1))
+
+        else:
+            for i in range(K+1):
+                colony[i].safe = False
+                colony[i].alarm = False
     else:
         # if predator already present
+        pred_staying += 1
         for i in range(K):
             if dist(colony[i].z, predator_pos) <= predator_rng and colony[i].alive:
                 colony[i].alive = False  # predator eats ants which come closer than predator_rng to him
                 print("ant " + str(i) + " has been eaten")
                 ants_eaten += 1
         if ants_eaten > 0:
-            time_delay += 1
-        if time_delay >= 0:  # change it to some time later
+            time_wait += 1
+        if time_wait >= time_delay:
             if not colony[K].alarm:
                 colony[K].alarm = True  # when predator spawns, ants in the nest are alarmed (w/ a time delay)
             for i in range(K+1):
@@ -192,6 +206,13 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
         # notice that information about predator being in the environment propagates instantaneously around the
         # network. It would be more realistic if it had a certain time of propagation, or maybe if it was a continuously
         # increasing function
+        if pred_staying == pred_time:
+            predator = False
+            predation_time_interval = [t1 - pred_staying, t1]
+            print("**** predator disappeared from environment after " + str(pred_staying) + " time steps ****")
+            print("since predator has disappeared, all alive ants are now going to look for food again")
+            print("predator time interval was [" + str(predation_time_interval[0])
+                  + ", " + str(predation_time_interval[1]) + "]")
 
     # only N ants moving now, M will join when food is found. Until then, M ants will stay in the nest
     for i in range(N):  # first, checking which ants have reached their homing time
@@ -235,30 +256,31 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
                         colony[i].safe = True
                         safe_ants += 1
     if food_found:
+
         break
 
 print("of " + str(N) + " total ants in the colony, " + str(ants_eaten) + " were eaten by predator while " +
       str(safe_ants) + " returned home safely. " + str(abs(N - (ants_eaten + safe_ants))) +
       " ants are still out there...")
 
-t_graph1 = 20
-t_graph2 = 200
+t_graph1 = 50
+t_graph2 = 400
 # ant that found food goes back and recruits M more ants to follow on the search. K ants involved now
-
 if food_found:
     for t2 in range(t_max):
         for i in range(K):
             colony[i].chaotic_annealing()  # decrement of s
             colony[i].model(t2)
-            if t2 < t_graph1:
-                plotX2[i][t2] = colony[i].z.x
-                plotY2[i][t2] = colony[i].z.y
-            if t_graph1 < t2 < t_graph2:
-                plotX3[i][t2] = colony[i].z.x
-                plotY3[i][t2] = colony[i].z.y
-            if t2 > t_graph2:
-                plotX4[i][t2] = colony[i].z.x
-                plotY4[i][t2] = colony[i].z.y
+            if colony[i].alive:
+                if t2 < t_graph1:
+                    plotX2[i][t2] = colony[i].z.x
+                    plotY2[i][t2] = colony[i].z.y
+                if t_graph1 < t2 < t_graph2:
+                    plotX3[i][t2] = colony[i].z.x
+                    plotY3[i][t2] = colony[i].z.y
+                if t2 > t_graph2:
+                    plotX4[i][t2] = colony[i].z.x
+                    plotY4[i][t2] = colony[i].z.y
 
 """
 for i in range(K):
@@ -285,8 +307,6 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.title('z(t)')
 plt.show()
-"""
-# plots
 
 for i in range(N):
     plt.scatter(plotX1[i], plotY1[i], marker=".", s=30)
@@ -304,10 +324,11 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.title('z(t) of homing ants')
 plt.show()
+"""
+# plots
 
 fig, ax = plt.subplots(1)
 fig.suptitle('predation response')
-
 for i in range(K):
     if colony[i].alive:
         if colony[i].alarm:
@@ -317,11 +338,11 @@ for i in range(K):
                 ax.scatter(plotGraphXF[i], plotGraphYF[i], marker=".", s=85, color="blue")
         else:
             ax.scatter(plotGraphXF[i], plotGraphYF[i], marker=".", s=85, color="green")
-        # for j in range(K + 1):
-            # if j < i and A[i][j] == 1 and colony[j].alive and not colony[i].safe and not colony[j].safe:
-                # x_values = [plotGraphX[i], plotGraphX[j]]
-                # y_values = [plotGraphY[i], plotGraphY[j]]
-                # ax.plot(x_values, y_values, color="lightskyblue")
+        for j in range(K + 1):
+            if j < i and A[i][j] == 1 and colony[j].alive and not colony[i].safe and not colony[j].safe:
+                x_values = [plotGraphXF[i], plotGraphXF[j]]
+                y_values = [plotGraphYF[i], plotGraphYF[j]]
+                ax.plot(x_values, y_values, color="lightskyblue")
     else:
         ax.scatter(plotGraphXF[i], plotGraphYF[i], marker="x", s=55, color="black")
 
@@ -332,6 +353,7 @@ ax.scatter(p_nest.x, p_nest.y, marker="*", s=80, color="blue")
 ax.set(xlabel='x(t)', ylabel='y(t)')
 plt.title('ant network at tf')
 plt.show()
+
 
 fig1, axs1 = plt.subplots(1, 2)
 fig1.suptitle('z(t) of food searching ants (left) and homing ones (right)')
