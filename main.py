@@ -35,11 +35,13 @@ min_c = 0.01  # minimum value for nest constant
 max_c = 0.2  # maximum value for nest constant
 food_found = False  # to break out of food searching loop
 food_found_time = 0
-optimal_path_finding = True  # put it false if you don't want the ants to look for optimal path, and just look for food
 predator = False  # presence of predator in the environment
 pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.1  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
+sim_number = 200  # number of simulations to perform
+
+optimal_path_finding = True  # put it false if you don't want the ants to look for optimal path, and just look for food
 predation_effect = True  # put it false if you don't want predator to ever appear during food searching
 
 
@@ -155,7 +157,7 @@ TH = [0] * N  # counter to check how much time it takes for ants to reach their 
 simulation_data = open('sim.data', 'a')
 
 for t1 in range(t_max):  # food searching loop (+ homing + predation)
-    print("t1= " + str(t1))
+    # print("t1= " + str(t1))
     food_found_time += 1
 
     # adjourning ants network. consider K-th element which is the source
@@ -264,15 +266,23 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
     if food_found:
         break
 
-if food_found:
-    simulation_data.write("1 \t" + str(food_found_time) + "\n")
-else:
-    simulation_data.write("0 \n")
-simulation_data.close()
-
 # print("of " + str(N) + " total ants in the colony, " + str(ants_eaten) + " were eaten by predator while " +
 #       str(safe_ants) + " returned home safely. " + str(abs(N - (ants_eaten + safe_ants))) +
 #       " ants are still out there...")
+ants_left = K - ants_eaten
+
+if not predation_effect:  # no predator: just save if food found & how much time it took
+    if food_found:
+        simulation_data.write("1 \t" + str(food_found_time) + "\n")
+    else:
+        simulation_data.write("0 \n")
+else:  # save als o how many ants are left after predation
+    if food_found:
+        simulation_data.write("1 \t" + str(food_found_time) + "\t" + str(ants_left) + "\n")
+    else:
+        simulation_data.write("0 \t 0 \t" + str(ants_left) + "\n")
+simulation_data.close()
+
 
 t_graph1 = 200
 t_graph2 = 500
