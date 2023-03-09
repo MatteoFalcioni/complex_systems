@@ -249,6 +249,8 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
                         colony[i].v = v_search
             else:  # if ant i is alarmed by the presence of a predator it will be homing to escape
                 colony[i].homing = True
+                # centering chaotic search around current position to look for the nest in the homing process
+                v_home = Pos(7.5 / (2 * psi) - colony[i].z.x, 7.5 / (2 * psi) - colony[i].z.y)
                 if colony[i].homing:  # if it hasn't found the nest yet in its run from the predator
                     colony[i].model(t1)
                     if dist(colony[i].z, p_nest) < colony[i].c:  # nest found. Stay there since you're alarmed
@@ -256,15 +258,20 @@ for t1 in range(t_max):  # food searching loop (+ homing + predation)
                         colony[i].safe = True
                         safe_ants += 1
     if food_found:
-
         break
+
+if food_found:
+    simulation_data.write("1 \t" + str(food_found_time) + "\n")
+else:
+    simulation_data.write("0 \n")
+simulation_data.close()
 
 print("of " + str(N) + " total ants in the colony, " + str(ants_eaten) + " were eaten by predator while " +
       str(safe_ants) + " returned home safely. " + str(abs(N - (ants_eaten + safe_ants))) +
       " ants are still out there...")
 
-t_graph1 = 50
-t_graph2 = 400
+t_graph1 = 200
+t_graph2 = 500
 # ant that found food goes back and recruits M more ants to follow on the search. K ants involved now
 if food_found:
     for t2 in range(t_max):
@@ -281,6 +288,11 @@ if food_found:
                 if t2 > t_graph2:
                     plotX4[i][t2] = colony[i].z.x
                     plotY4[i][t2] = colony[i].z.y
+
+# To do list: comparing numerically food finding probability with & without predator. So save on a file like 200
+# simulations without a predator (just put predator always false) & 200 with a predator. Could also plot the average
+# number of eaten and safe ants... don't know if it's useful or not. Probably yes since you can then plot probabilities
+# of finding food with regard to number of ants present after predation.
 
 """
 for i in range(K):
@@ -324,6 +336,8 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.title('z(t) of homing ants')
 plt.show()
+"""
+
 """
 # plots
 
@@ -394,7 +408,7 @@ for ax in axs.flat:
     ax.set(adjustable='box', aspect='equal')
     ax.label_outer()
 plt.show()
-
+"""
 
 
 
