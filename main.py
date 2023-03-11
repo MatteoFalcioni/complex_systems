@@ -33,10 +33,10 @@ max_t_h = 20  # maximum value for homing times
 min_c = 0.01  # minimum value for nest constant
 max_c = 0.2  # maximum value for nest constant
 pred_prob = 0.1  # probability of predator appearing at each time step
-predator_rng = 0.1  # radius of the circle in which predator eats ants
+predator_rng = 0.2  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
 time_delay = 5  # to give delay to info of ants being eaten by predator
-sim_number = 200  # number of simulations to perform
+sim_number = 600  # number of simulations to perform
 
 optimal_path_finding = False  # put it false if you don't want the ants to look for optimal path, and just look for food
 predation_effect = False  # put it false if you don't want predator to ever appear during food searching
@@ -126,7 +126,10 @@ plotGraphXF = [0] * (K+1)
 plotGraphYF = [0] * (K+1)
 """
 
-simulation_data = open('sim.data', 'a')
+if predation_effect:
+    simulation_data = open('sim_pert.data', 'a')
+else:
+    simulation_data = open('sim.data', 'a')
 print("starting to perform " + str(sim_number) + " simulations \n")
 
 for sim in range(sim_number):
@@ -279,12 +282,12 @@ for sim in range(sim_number):
         if food_found:
             simulation_data.write("1 \t" + str(food_found_time) + "\n")
         else:
-            simulation_data.write("0 \n")
+            simulation_data.write("0 \t -1 \n")
     else:  # save als o how many ants are left after predation
         if food_found:
             simulation_data.write("1 \t" + str(food_found_time) + "\t" + str(ants_left) + "\n")
         else:
-            simulation_data.write("0 \t 0 \t" + str(ants_left) + "\n")
+            simulation_data.write("0 \t -1 \t" + str(ants_left) + "\n")
 
     t_graph1 = 200
     t_graph2 = 500
