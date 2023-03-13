@@ -84,3 +84,28 @@ def pos_generator(rng, center):
     return z_gen
 
 
+psi = 5  # search range, could be a vector but in this model we take it as a number
+phi = 7.5 / psi  # search diameter
+p_nest = Pos(0.4, 0.4)  # nest position
+p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landscape potential f)
+v_search = Pos(7.5 / (2 * psi) - p_nest.x, 7.5 / (2 * psi) - p_nest.y)  # needed in the model to roam both z>0 & z<0
+r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
+delta = 1e-3  # upper limit on landscape potential (f(z)<delta -> z minimum)
+a = 15
+b = 0.3  # a & b constants to fix weights of the exponential in model
+w = 0.11  # frequency of nest->food->nest travel
+D = 0.2  # distance below which ants are connected in graph. Could also grow with t (alarm pheromone density increases)
+M = 5  # number of recruited ants
+N = 50  # number of searching ants (whole colony: K)
+K = N+M
+t_max = 1000  # number of iterations
+s_0 = 0.999  # initial value of organization parameter
+min_t_h = 5  # minimum value for homing times
+max_t_h = 20  # maximum value for homing times
+min_c = 0.01  # minimum value for nest constant
+max_c = 0.2  # maximum value for nest constant
+pred_prob = 0.1  # probability of predator appearing at each time step
+predator_rng = 0.2  # radius of the circle in which predator eats ants
+pred_time = 50  # time steps for which the predator will be present in the environment
+time_delay = 5  # to give delay to info of ants being eaten by predator
+sim_number = 1000  # number of simulations to perform

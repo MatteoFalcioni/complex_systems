@@ -36,10 +36,10 @@ pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.2  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
 time_delay = 5  # to give delay to info of ants being eaten by predator
-sim_number = 1000  # number of simulations to perform
+sim_number = 1  # number of simulations to perform
 
-optimal_path_finding = False  # put it false if you don't want the ants to look for optimal path, and just look for food
-predation_effect = True  # put it false if you don't want predator to ever appear during food searching
+optimal_path_finding = True  # put it false if you don't want the ants to look for optimal path, and just look for food
+predation_effect = False  # put it false if you don't want predator to ever appear during food searching
 
 
 class Ant:
@@ -106,7 +106,6 @@ def pos_generator(rng, center):
     return z_gen
 
 
-"""
 # plots
 plotX1 = [[0 for j in range(t_max)] for i in range(K)]
 plotY1 = [[0 for j in range(t_max)] for i in range(K)]
@@ -124,7 +123,9 @@ plotGraphX2 = [0] * (K+1)
 plotGraphY2 = [0] * (K+1)
 plotGraphXF = [0] * (K+1)
 plotGraphYF = [0] * (K+1)
-"""
+
+t_graph1 = 20
+t_graph2 = 50
 
 if predation_effect:
     simulation_data = open('sim_pert.data', 'a')
@@ -289,15 +290,12 @@ for sim in range(sim_number):
         else:
             simulation_data.write("0 \t -1 \t" + str(ants_left) + "\n")
 
-    t_graph1 = 200
-    t_graph2 = 500
     # ant that found food goes back and recruits M more ants to follow on the search. K ants involved now
     if food_found and optimal_path_finding:
         for t2 in range(t_max):
             for i in range(K):
                 colony[i].chaotic_annealing()  # decrement of s
                 colony[i].model(t2)
-                """
                 if colony[i].alive:
                     if t2 < t_graph1:
                         plotX2[i][t2] = colony[i].z.x
@@ -308,7 +306,7 @@ for sim in range(sim_number):
                     if t2 > t_graph2:
                         plotX4[i][t2] = colony[i].z.x
                         plotY4[i][t2] = colony[i].z.y
-                """
+
     print(str(sim) + "/" + str(sim_number) + " simulations performed")
 
 simulation_data.close()
@@ -407,6 +405,7 @@ for ax in axs1.flat:
     ax.label_outer()
 plt.show()
 
+"""
 fig = plt.figure()
 gs = fig.add_gridspec(3, hspace=0.5)
 axs = gs.subplots(sharex=True, sharey=True)
@@ -430,10 +429,9 @@ axs[2].set_title('t > ' + str(t_graph2))
 
 for ax in axs.flat:
     ax.set(xlabel='x(t)', ylabel='y(t)')
-    ax.set(adjustable='box', aspect='equal')
+    # ax.set(adjustable='box', aspect='equal')
     ax.label_outer()
 plt.show()
-"""
 
 
 
