@@ -10,16 +10,6 @@ class Pos:
         self.y = y
 
 
-psi = 5  # search range, could be a vector but in this model we take it as a number
-phi = 7.5 / psi  # search diameter
-p_nest = Pos(0.4, 0.4)  # nest position
-p_food = Pos(0.7, 0.5)  # food position (coincides with global minimum of landscape potential f)
-a = 15
-b = 0.3  # a & b constants to fix weights of the exponential in model
-w = 0.11  # frequency of nest->food->nest travel
-r = 0.3  # chaotic annealing parameter: defines how quickly the colony synchronizes
-
-
 class Ant:
 
     def __init__(self, s, z, t_h, c, v):

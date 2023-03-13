@@ -29,8 +29,8 @@ K = N+M
 t_max = 1000  # number of iterations
 s_0 = 0.999  # initial value of organization parameter
 min_t_h = 5  # minimum value for homing times
-max_t_h = 20  # maximum value for homing times
-min_c = 0.01  # minimum value for nest constant
+max_t_h = 5  # maximum value for homing times
+min_c = 0.2  # minimum value for nest constant
 max_c = 0.2  # maximum value for nest constant
 pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.2  # radius of the circle in which predator eats ants
@@ -38,8 +38,8 @@ pred_time = 50  # time steps for which the predator will be present in the envir
 time_delay = 5  # to give delay to info of ants being eaten by predator
 sim_number = 1  # number of simulations to perform
 
-optimal_path_finding = True  # put it false if you don't want the ants to look for optimal path, and just look for food
-predation_effect = False  # put it false if you don't want predator to ever appear during food searching
+optimal_path_finding = False  # put it false if you don't want the ants to look for optimal path, and just look for food
+predation_effect = True  # put it false if you don't want predator to ever appear during food searching
 
 
 class Ant:
@@ -105,7 +105,7 @@ def pos_generator(rng, center):
     z_gen = Pos(x_gen, y_gen)
     return z_gen
 
-
+"""
 # plots
 plotX1 = [[0 for j in range(t_max)] for i in range(K)]
 plotY1 = [[0 for j in range(t_max)] for i in range(K)]
@@ -123,6 +123,7 @@ plotGraphX2 = [0] * (K+1)
 plotGraphY2 = [0] * (K+1)
 plotGraphXF = [0] * (K+1)
 plotGraphYF = [0] * (K+1)
+"""
 
 t_graph1 = 20
 t_graph2 = 50
@@ -296,6 +297,7 @@ for sim in range(sim_number):
             for i in range(K):
                 colony[i].chaotic_annealing()  # decrement of s
                 colony[i].model(t2)
+                """
                 if colony[i].alive:
                     if t2 < t_graph1:
                         plotX2[i][t2] = colony[i].z.x
@@ -306,16 +308,13 @@ for sim in range(sim_number):
                     if t2 > t_graph2:
                         plotX4[i][t2] = colony[i].z.x
                         plotY4[i][t2] = colony[i].z.y
-
+                """
     print(str(sim) + "/" + str(sim_number) + " simulations performed")
 
 simulation_data.close()
 
-# To do list: comparing numerically food finding probability with & without predator. So save on a file like 200
-# simulations without a predator (just put predator always false) & 200 with a predator. Could also plot the average
-# number of eaten and safe ants... don't know if it's useful or not. Probably yes since you can then plot probabilities
-# of finding food with regard to number of ants present after predation.
-# Also, commented all printing messages and plots to do simulations faster
+# To do list: comparing probability of being eaten by predator of different aged ants (by varying c and t_h, since
+# older ants have bigger c and smaller t, while younger viceversa
 
 """
 for i in range(K):
