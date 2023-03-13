@@ -36,10 +36,10 @@ pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.2  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
 time_delay = 5  # to give delay to info of ants being eaten by predator
-sim_number = 600  # number of simulations to perform
+sim_number = 1000  # number of simulations to perform
 
 optimal_path_finding = False  # put it false if you don't want the ants to look for optimal path, and just look for food
-predation_effect = False  # put it false if you don't want predator to ever appear during food searching
+predation_effect = True  # put it false if you don't want predator to ever appear during food searching
 
 
 class Ant:
