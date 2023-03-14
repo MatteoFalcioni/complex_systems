@@ -5,6 +5,8 @@ import math
 import random
 import ants as a
 
+"""
+
 with open('sim.data') as f1:
     lines = f1.readlines()
     x1 = [int(line.split()[0]) for line in lines]
@@ -53,7 +55,7 @@ ax1.bar("unperturbed system", p_unperturbed, width, color="green")
 ax1.bar("perturbed system", p_perturbed, width, color="red")
 margin = (1 - width) + width / 2
 ax1.set_xlim(-margin, 2 - 1 + margin)
-ax1.set_ylim(0, 1)
+ax1.set_ylim(0, 1.1)
 plt.ylabel("p")
 plt.show()
 
@@ -160,5 +162,46 @@ ax.set(xlabel='x(t)', ylabel='y(t)')
 plt.title('ants network')
 plt.show()
 
+"""
+# t_h = t_tired
+# old ants: 5 < t_tired < 10, 0.2 < c < 0.21
+# middle aged ants: 20 < t_tired < 30, 0.1 < c < 0.15
+# young ants: 40 < t_tired < 50, 0.05 < c < 0.1
+# I want to plot probability of finding food for each group of ages and number of ants eaten
+
+with open('old_ants.data') as f_old:
+    lines = f_old.readlines()
+    x_old = [int(line.split()[0]) for line in lines]
+    old_eaten = [int(line.split()[2]) for line in lines]
+
+with open('middle_ants.data') as f_middle:
+    lines = f_middle.readlines()
+    x_middle = [int(line.split()[0]) for line in lines]
+    middle_eaten = [int(line.split()[2]) for line in lines]
+
+with open('young_ants.data') as f_young:
+    lines = f_young.readlines()
+    x_young = [int(line.split()[0]) for line in lines]
+    young_eaten = [int(line.split()[2]) for line in lines]
+
+n_sim = len(x_old)
+p_old = x_old.count(1)/n_sim
+p_middle = x_middle.count(1)/n_sim
+p_young = x_young.count(1)/n_sim
+
+fig1, ax1 = plt.subplots(1)
+fig1.suptitle('probability of finding food')
+print("p_old = " + str(p_old))
+print("p_middle = " + str(p_middle))
+print("p_young = " + str(p_young))
+width = 0.1
+ax1.bar("old ants", p_old, width, color="green")
+ax1.bar("middle aged \n ants", p_middle, width, color="red")
+ax1.bar("young ants", p_young, width, color="blue")
+margin = (3/2 - width) + width / 3
+ax1.set_xlim(-margin, 3 - 1 + margin)
+ax1.set_ylim(0, 1.1)
+plt.ylabel("p")
+plt.show()
 
 

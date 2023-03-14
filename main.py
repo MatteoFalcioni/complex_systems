@@ -28,15 +28,15 @@ N = 50  # number of searching ants (whole colony: K)
 K = N+M
 t_max = 1000  # number of iterations
 s_0 = 0.999  # initial value of organization parameter
-min_t_h = 5  # minimum value for homing times
-max_t_h = 5  # maximum value for homing times
-min_c = 0.2  # minimum value for nest constant
-max_c = 0.2  # maximum value for nest constant
+min_t_h = 40  # minimum value for homing times
+max_t_h = 50  # maximum value for homing times
+min_c = 0.05  # minimum value for nest constant
+max_c = 0.1  # maximum value for nest constant
 pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.2  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
 time_delay = 5  # to give delay to info of ants being eaten by predator
-sim_number = 1  # number of simulations to perform
+sim_number = 1000  # number of simulations to perform
 
 optimal_path_finding = False  # put it false if you don't want the ants to look for optimal path, and just look for food
 predation_effect = True  # put it false if you don't want predator to ever appear during food searching
@@ -129,7 +129,7 @@ t_graph1 = 20
 t_graph2 = 50
 
 if predation_effect:
-    simulation_data = open('sim_pert.data', 'a')
+    simulation_data = open('young_ants.data', 'a')
 else:
     simulation_data = open('sim.data', 'a')
 print("starting to perform " + str(sim_number) + " simulations \n")
@@ -404,7 +404,7 @@ for ax in axs1.flat:
     ax.label_outer()
 plt.show()
 
-"""
+
 fig = plt.figure()
 gs = fig.add_gridspec(3, hspace=0.5)
 axs = gs.subplots(sharex=True, sharey=True)
@@ -431,7 +431,7 @@ for ax in axs.flat:
     # ax.set(adjustable='box', aspect='equal')
     ax.label_outer()
 plt.show()
-
+"""
 
 
 
