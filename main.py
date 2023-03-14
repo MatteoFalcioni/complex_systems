@@ -28,10 +28,10 @@ N = 50  # number of searching ants (whole colony: K)
 K = N+M
 t_max = 1000  # number of iterations
 s_0 = 0.999  # initial value of organization parameter
-min_t_h = 40  # minimum value for homing times
-max_t_h = 50  # maximum value for homing times
-min_c = 0.05  # minimum value for nest constant
-max_c = 0.1  # maximum value for nest constant
+min_t_h = 5  # minimum value for homing times
+max_t_h = 20  # maximum value for homing times
+min_c = 0.01  # minimum value for nest constant
+max_c = 0.2  # maximum value for nest constant
 pred_prob = 0.1  # probability of predator appearing at each time step
 predator_rng = 0.2  # radius of the circle in which predator eats ants
 pred_time = 50  # time steps for which the predator will be present in the environment
@@ -129,7 +129,7 @@ t_graph1 = 20
 t_graph2 = 50
 
 if predation_effect:
-    simulation_data = open('young_ants.data', 'a')
+    simulation_data = open('sim_pert.data', 'a')
 else:
     simulation_data = open('sim.data', 'a')
 print("starting to perform " + str(sim_number) + " simulations \n")

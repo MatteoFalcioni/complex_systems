@@ -5,7 +5,6 @@ import math
 import random
 import ants as a
 
-"""
 
 with open('sim.data') as f1:
     lines = f1.readlines()
@@ -44,6 +43,7 @@ t_unpert_dev = stat.stdev(t_unperturbed)
 print("avg value of unperturbed times is t_unp = " + str(mean_t_unpert) + " +/- " + str(t_unpert_dev))
 print("avg value of perturbed times is t_pert = " + str(mean_t_pert) + " +/- " + str(t_pert_dev))
 
+"""
 fig1, ax1 = plt.subplots(1)
 fig1.suptitle('probability of finding food')
 p_unperturbed = x1.count(1)/n_sim
@@ -58,8 +58,9 @@ ax1.set_xlim(-margin, 2 - 1 + margin)
 ax1.set_ylim(0, 1.1)
 plt.ylabel("p")
 plt.show()
+"""
 
-n_bins = 40
+n_bins = 22
 fig2 = plt.figure()
 gs = fig2.add_gridspec(2, hspace=0.5)
 ax2 = gs.subplots(sharex=True, sharey=True)
@@ -67,7 +68,7 @@ fig2.suptitle('distribution of number of iterations needed to find food')
 ax2[0].hist(t_unperturbed, n_bins)
 ax2[0].axvline(stat.mean(t_unperturbed), color='k', linestyle='dashed', linewidth=1)
 ax2[0].set_title('unperturbed system')
-ax2[1].hist(t_perturbed, n_bins)
+ax2[1].hist(t_perturbed, n_bins-2)
 ax2[1].set_title('perturbed system')
 ax2[1].axvline(stat.mean(t_perturbed), color='k', linestyle='dashed', linewidth=1)
 for ax in ax2.flat:
@@ -78,6 +79,7 @@ plt.show()
 fig3, ax3 = plt.subplots(1)
 fig3.suptitle('probability of finding food vs number of ants left after predation')
 
+"""
 labels = [0]*56
 for i in range(56):
     labels[i] = i
@@ -161,6 +163,7 @@ ax.scatter(a.p_nest.x, a.p_nest.y, marker="*", s=80, color="blue", zorder=5, lab
 ax.set(xlabel='x(t)', ylabel='y(t)')
 plt.title('ants network')
 plt.show()
+"""
 
 """
 # t_h = t_tired
@@ -204,4 +207,32 @@ ax1.set_ylim(0, 1.1)
 plt.ylabel("p")
 plt.show()
 
+n_bins = 25
+fig2 = plt.figure()
+gs = fig2.add_gridspec(3, hspace=0.5)
+ax2 = gs.subplots(sharex=True, sharey=True)
+fig2.suptitle('number of ants left after predation for different ant ages')
+ax2[0].hist(old_eaten, n_bins, color="green")
+ax2[0].axvline(stat.mean(old_eaten), color='k', linestyle='dashed', linewidth=1)
+ax2[0].set_title('old ants')
+ax2[1].hist(middle_eaten, n_bins, color="red")
+ax2[1].set_title('middle aged ants')
+ax2[1].axvline(stat.mean(middle_eaten), color='k', linestyle='dashed', linewidth=1)
+ax2[2].hist(young_eaten, n_bins, color="blue")
+ax2[2].set_title('young ants')
+ax2[2].axvline(stat.mean(young_eaten), color='k', linestyle='dashed', linewidth=1)
+for ax in ax2.flat:
+    ax.set(xlabel='number of ants left', ylabel='occurrences')
+    ax.label_outer()
+plt.show()
+
+mean_n_old = stat.mean(old_eaten)
+sigma_old = math.sqrt(np.var(old_eaten, ddof=1))
+mean_n_middle = stat.mean(middle_eaten)
+sigma_middle = math.sqrt(np.var(middle_eaten, ddof=1))
+mean_n_young = stat.mean(young_eaten)
+sigma_young = math.sqrt(np.var(young_eaten, ddof=1))
+print("mean number of ants for old, middle aged and young ants are: \n" + str(mean_n_old) + " +/- " + str(sigma_old)
+      + "\n" + str(mean_n_middle) + " +/- " + str(sigma_middle) + "\n" + str(mean_n_young) + " +/- " + str(sigma_young))
+"""
 
